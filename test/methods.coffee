@@ -1,6 +1,6 @@
 expect = require('expect.js')
 
-visitor = { extractRequestFromTitle, getNameForScreenshot } = require('../src')()
+visitor = { extractRequestFromTitle } = require('../src')()
 
 describe 'unit tests for VisitorJS', ->
 
@@ -67,8 +67,3 @@ describe 'unit tests for VisitorJS', ->
       user: 'admin'
       statusCode: null
     }
-
-  it 'expect to define screenshot names (getNameForScreenshot)', ->
-    filename = getNameForScreenshot { title: 'Name for the test?' }, (i, test) -> "myown/#{i}_#{test}_pattern.png"
-    expect(filename).to.equal 'myown/000_name_for_the_test_pattern.png'
-    true

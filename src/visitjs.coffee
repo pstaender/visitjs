@@ -1,5 +1,5 @@
 sanitize = require("sanitize-filename")
-request = require('sync-request')
+syncRequest = require('sync-request')
 isHtml = require('is-html')
 isXML = require('is-xml')
 isJSON = require('is-json')
@@ -16,32 +16,33 @@ VisitorJS = (browser, options = {}) ->
   #   passsword: 'password'
   # default_user:
   #   password: '…'
-  logins = options.logins || {}
+  options.logins ?= {}
 
-  saveViewportScreenshotPattern = null
+  _saveViewportScreenshotPattern = null
 
   saveViewportScreenshot = (pattern) ->
     if pattern is true
-      saveViewportScreenshotPattern = (i, test) -> "images/#{test}.png"
+      _saveViewportScreenshotPattern = (i, test, desiredCapabilities, safeTitle) -> "images/#{desiredCapabilities?.browserName}_#{i}_#{safeTitle}.png"
     else if pattern isnt undefined
-      saveViewportScreenshotPattern = pattern
-    saveViewportScreenshotPattern
+      _saveViewportScreenshotPattern = pattern
+    _saveViewportScreenshotPattern
 
-  loginProcedure = null
-  logoutProcedure = null
-  headlessRequestProcedure = null
+  _loginProcedure = null
+  _logoutProcedure = null
 
   login = (loginFunction) ->
-    loginProcedure = loginFunction if loginFunction isnt undefined
-    loginProcedure
+    _loginProcedure = loginFunction if loginFunction isnt undefined
+    _loginProcedure
 
   logout = (logoutFunction) ->
-    logoutProcedure = logoutFunction if logoutFunction isnt undefined
-    logoutProcedure
+    _logoutProcedure = logoutFunction if logoutFunction isnt undefined
+    _logoutProcedure
+
+  _headlessRequestProcedure = null
 
   headlessRequest = (func) ->
-    headlessRequestProcedure = func if func isnt undefined
-    headlessRequestProcedure
+    _headlessRequestProcedure = func if func isnt undefined
+    _headlessRequestProcedure
 
   extractRequestFromTitle = (title) ->
     match = title.match ///
@@ -101,21 +102,29 @@ VisitorJS = (browser, options = {}) ->
 
     func.apply(this, args)
 
-  getNameForScreenshot = (opts = { }, namePattern) ->
-    { title, ext } = opts
-    ext ?= '.png'
+  verifyResponse = (opts) ->
 
-    safe_filename = (name) -> sanitize(name.replace(/http[s]*\:\/\//i,'').replace(/\//g, '%')).toLowerCase().replace(/\s+/g, '_') if name
-    zfill = (num, len) -> (Array(len).join('0') + num).slice -len
+    { requestOptions, statusCode, url, method, format } = opts
 
-    if typeof namePattern is 'function'
-      filename = _callMethodWithArgs namePattern, {
-        'i': String(zfill(visitsCount, 3))
-        'test': safe_filename(title)
-      }
-    else
-      filename = safe_filename(title)
-    filename
+    res = syncRequest(method, url, requestOptions)
+    expect(res.statusCode).to.be.equal statusCode
+
+    # TODO: check more format (yml, cson, …)
+    if format
+      expectedFormat = format.toLowerCase()
+      body = res.body.toString()
+
+      format = if isHtml(body)
+        'html'
+      if isXML(body)
+        'xml'
+      if isJSON(body)
+        'json'
+      else
+        'unknown format'
+      expect(format).to.be.equal expectedFormat
+
+    res
 
   visit = (context, opts = {}, cb = null) ->
     visitsCount++
@@ -127,6 +136,7 @@ VisitorJS = (browser, options = {}) ->
     return throw Error("No url given; use test decription -or- { url: '…' } to specify the url which should be requested") unless url
 
     if requestObject.user
+      # perform logout and login
       if typeof logout() is 'function'
         { user } = requestObject
         logoutFunc = logout()
@@ -134,8 +144,8 @@ VisitorJS = (browser, options = {}) ->
       if typeof login() is 'function'
         # login user first
         { user } = requestObject
-        password = logins[user].password
-        user = logins[user]['user'] || user
+        password = options.logins[user].password
+        user = options.logins[user]['user'] || user
         loginFunc = login()
         _callMethodWithArgs loginFunc, { browser, user, password }
 
@@ -145,46 +155,51 @@ VisitorJS = (browser, options = {}) ->
     absoluteUrl = browser.getUrl()
 
     if requestObject.statusCode
+      # perform headless request as well
 
       # extract cookies
       requestOptions = {
         followRedirects: false
       }
-      requestOptions = _callMethodWithArgs(headlessRequest(), { cookie: browser.cookie().value, options: requestOptions }) if typeof headlessRequest() is 'function'
+      requestOptions = _callMethodWithArgs(headlessRequest(), {
+        cookie: browser.cookie().value,
+        options: requestOptions
+      }) if typeof headlessRequest() is 'function'
 
       # reverse engineer baseUrl (workaround), TODO: get from webdriver.io
       #parsedURL = require('url').parse(absoluteUrl)
       #urlForRequest = [ parsedURL.protocol, '//', parsedURL.auth || '', parsedURL.host, url ].join('')
-      urlForRequest = browser.requestHandler.defaultOptions.baseUrl + url
-      responseObject = request(requestObject.method, urlForRequest, requestOptions)
-      expect(responseObject.statusCode).to.be.equal requestObject.statusCode
-      # TODO: check more format (yml, cson, …)
-      if requestObject.format
-        expectedFormat = requestObject.format.toLowerCase()
-        body = responseObject.body.toString()
+      urlForRequest = if /^http[s]*\:\/\//.test(url)
+        url
+      else
+        browser.requestHandler.defaultOptions.baseUrl + url
 
-        format = if isHtml(body)
-          'html'
-        if isXML(body)
-          'xml'
-        if isJSON(body)
-          'json'
-        else
-          'unknown format'
-
-        expect(format).to.be.equal expectedFormat
-
+      responseObject = verifyResponse {
+        method: requestObject.method
+        url: urlForRequest
+        requestOptions
+        format: requestObject.format || null
+        statusCode: requestObject.statusCode || null
+      }
 
     if isGetRequest and saveViewportScreenshot()
+      # take screenshot
 
-      filename = getNameForScreenshot({ title: test.title }, saveViewportScreenshot())#(s, t, test, suite) -> true) + '.png'
+      filename = _callMethodWithArgs saveViewportScreenshot(), {
+        i: visitsCount
+        test: test.title
+        safeTitle: sanitize(test.title.replace(/(http[s]*)\:\/\//i,"[$1]").replace(/\//g, '%')).trim()
+        desiredCapabilities: browser.requestHandler.defaultOptions.desiredCapabilities
+      }
+
+      #filename = getNameForScreenshot({ title: test.title, desiredCapabilities: browser.requestHandler.desiredCapabilities }, saveViewportScreenshot())
       browser.saveViewportScreenshot filename
       # has to be enabled explicity every time
-      saveViewportScreenshotPattern = null
+      _saveViewportScreenshotPattern = null
 
     browser
 
 
-  { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, getNameForScreenshot, headlessRequest }
+  { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, headlessRequest }
 
 module.exports = VisitorJS

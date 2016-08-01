@@ -1,6 +1,6 @@
 {
   "name": "visitjs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Philipp Staender <philipp.staender@gmail.com>",
   "homepage": "https://github.com/pstaender/visitjs/",
   "main": "./src/index",

@@ -14,7 +14,12 @@ exports.config = {
     capabilities: [{
         maxInstances: 5,
         browserName: 'chrome'
-    }],
+    },
+    // {
+    //     maxInstances: 5,
+    //     browserName: 'firefox',
+    // }
+    ],
     sync: true,
     logLevel: 'silent',
     coloredLogs: true,
