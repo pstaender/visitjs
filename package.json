@@ -1,0 +1,38 @@
+{
+  "name": "visitjs",
+  "version": "0.0.1",
+  "author": "Philipp Staender <philipp.staender@gmail.com>",
+  "homepage": "https://github.com/pstaender/visitjs/",
+  "main": "./src/index",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:pstaender/visitjs.git"
+  },
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha; ./node_modules/.bin/wdio"
+  },
+  "keywords": [
+    "frontendtesting",
+    "testing",
+    "selenium",
+    "webdriver.io",
+    "mocha"
+  ],
+  "dependencies": {
+    "chai": "^3.5.0",
+    "coffee-script": "~1.10.0",
+    "expect.js": "~0.3.1",
+    "is-html": "^1.0.0",
+    "is-json": "^2.0.0",
+    "is-xml": "^0.1.0",
+    "mocha": "~2.5.3",
+    "sanitize-filename": "^1.6.0",
+    "should": "~10.0.0",
+    "sync-request": "^3.0.1",
+    "wdio-mocha-framework": "^0.4.0",
+    "wdio-screenshot": "^0.1.2",
+    "wdio-selenium-standalone-service": "0.0.5",
+    "wdio-spec-reporter": "0.0.3",
+    "webdriverio": "^4.2.3"
+  }
+}
