@@ -15,19 +15,57 @@ Describe your test scenario and let visitjs guess the basic request information 
 
 Let's start simple:
 
-**(it) expect to visit http://mysite/home**
+**expect to visit http://mysite/home**
 
 Now we also want to proof a certain http status code (here 200) which will trigger a headless http request to the selenium test in parallel:
 
-**(it) expect to visit /home -> 200**
+**expect to visit /home -> 200**
 
 Additionally we can ensure that receiving expected format (only body will be validated, no format check in headers):
 
-**(it) expect to get /myapi/v1/person/1 as json -> 200**
+**expect to get /myapi/v1/person/1 as json -> 200**
+
+By using authorization (via `login` and `logout`), we can describe tests for different users:
+
+**expect to get /my/profile -> 200 authorized as admin**
 
 ### Login and Logout
 
-You can define custom login and logout process using `browser` (see `test/specs/browser.coffee` for further examples).
+Example: (see `test/specs/browser.coffee` for further examples).
+
+```coffee-script
+  { visit, login, logout } = require('visitjs')(browser, logins: {
+    admin: {
+      user: 'admin@server.local'
+      password: 'password'
+    },
+    user: {
+      user: 'user@somewhere.local'
+      password: 'secret'
+    }
+  })
+
+  describe 'my testsuite', ->
+
+    # Define logout procedure
+    logout (browser) ->
+      browser.url('/logout')
+
+    # Define logout procedure
+    login (browser, user, password) ->
+      browser.url('/login')
+      browser.element('#username').setValue user
+      browser.element('#password').setValue password
+      browser.submitForm('#login-form')
+
+    it 'expect to visit /my/profile with a 200 status code, logged in as admin', ->
+      { browser } = visit(this)
+      browser.getTitle().should.be.equal 'welcome back, admin'
+
+    it 'expect to visit /my/profile with a 200 status code, logged in as user', ->
+      { browser } = visit(this)
+      browser.getTitle().should.be.equal 'welcome back, user'
+```
 
 ### Basic Syntax
 

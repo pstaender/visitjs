@@ -1,11 +1,10 @@
+{ visit, login, logout, saveViewportScreenshot, headlessRequestOptions } = require('../../src') browser, logins: { admin: { password: 'password' } }
+
+
 chai = require('chai')
 global.expect = chai.expect
 chai.Should()
 
-webdriverio = require('webdriverio')
-serverProcess = null
-
-{ visit, login, logout, saveViewportScreenshot, headlessRequestOptions } = require('../../src') browser, logins: { admin: { password: 'password' } }
 
 describe 'Check websites with webdriver.io by it\'s test description (only format, status and title)', ->
 
