@@ -4,4 +4,6 @@ node_js:
   - "6.1"
   - "5"
 before_script:
+  - sudo apt-get install openjdk-7-jre-headless -y
+  - sudo apt-get install graphicsmagick -y
   - npm install -g webdriverio phantomjs coffee-script mocha selenium-standalone@latest

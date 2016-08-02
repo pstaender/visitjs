@@ -19,6 +19,8 @@
     "mocha"
   ],
   "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
     "is-html": "^1.0.0",
     "is-json": "^2.0.0",
     "is-xml": "^0.1.0",

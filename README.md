@@ -7,7 +7,7 @@ This is a demonstration of writing (nice to read) BDD tests in coffee-script usi
 
 The technology stack is set after my own preferences and therefore of course not the ultimate toolset.
 
-`Visitjs` acts as wrapper between mocha, lower-level request and high-level frontend testing via webdriver.io. The goal is to reduce repeating  actions (like login, http status code, response format, screenshot of the site …).
+`Visitjs` is a helper between mocha, lower-level request and high-level frontend testing via webdriver.io. The goal is to reduce repeating  actions (like login, http status code, response format, screenshot of the site …).
 
 ## Usage
 
