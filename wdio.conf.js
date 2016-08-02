@@ -20,10 +20,6 @@ exports.config = {
       //   maxInstances: 5,
       //   browserName: 'chrome'
       // },
-    // {
-    //     maxInstances: 5,
-    //     browserName: 'firefox',
-    // }
     ],
     services: ['selenium-standalone'],
     sync: true,

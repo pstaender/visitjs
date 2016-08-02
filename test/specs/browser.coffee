@@ -7,6 +7,7 @@ serverProcess = null
 
 { visit, login, logout, saveViewportScreenshot } = require('../../src') browser, logins: { admin: { password: 'password' } }
 
+# TODO: headlessRequest test
 # headlessRequest (options) ->
 #   {
 #     headers:
@@ -54,7 +55,7 @@ describe 'Perform various requests on (local) website', ->
     beforeEach ->
       saveViewportScreenshot(true)
 
-    it 'expect to visit /authorized -> 200 logged in as admin', ->
+    it 'expect to visit unauthroized /authorized -> 200 logged in as admin', ->
       { browser } = visit(this)
       browser.getTitle().should.be.equal 'authorized'
 
