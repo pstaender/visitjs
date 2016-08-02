@@ -1,6 +1,8 @@
 # visitjs
 ## BDD with mocha, webdriver.io and less pain
 
+[![Build Status](https://api.travis-ci.org/pstaender/visitjs.png)](https://travis-ci.org/pstaender/visitjs)
+
 This is a demonstration of writing (nice to read) BDD tests in coffee-script using mocha, chai (or whatever assertation tool you prefer) and webdriver.io / selenium.
 
 The technology stack is set after my own preferences and therefore of course not the ultimate toolset.
@@ -17,21 +19,22 @@ After installation (see below), define your project's tests in `test/spec` (or w
 describe 'Check some google pages', ->
 
   it 'expect to visit http://www.google.com/ as html with a status code of 200', ->
-    browser = visit(this)
+    { browser } = visit(this)
     expect(browser.getTitle()).to.be.equal('Google')
 
   it 'expect to visit http://www.google.de/someurlthatwillneverexists1930_899fsd with a 404', ->
-    browser = visit(this)
+    browser = visit(this).browser # alternate syntax as described above
+
 ```
 
 You can define test scenarios by describing the test title:
 
   * `expect to visit http://www.google.com/ as html with a status code of 200`, means:
-    - url: http://www.google.com/
-    - expected format: html
-    - (explicitly) expected status code: 200
+    - **url:** http://www.google.com/
+    - **expected format:** html
+    - **(explicitly) expected status code:** 200
   * `expect to visit /mysite/my/profile logged in as admin`, means:
-    - url: $baseUrl/mysite/my/profile
+    - **url:** $baseUrl/mysite/my/profile
     - login process (has to be defined), using user `admin`
   * `get /mysite/my/profile as html -> 200 (authenticated as admin)`, as example for a more technical description
 

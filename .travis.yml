@@ -1,0 +1,7 @@
+language: node_js
+node_js:
+  - "6"
+  - "6.1"
+  - "5"
+before_script:
+  - npm install -g webdriverio phantomjs coffee-script mocha selenium-standalone@latest

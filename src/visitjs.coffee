@@ -114,23 +114,32 @@ VisitorJS = (browser, options = {}) ->
       expectedFormat = format.toLowerCase()
       body = res.body.toString()
 
-      format = if isHtml(body)
-        'html'
-      if isXML(body)
-        'xml'
+      format = 'unknown format'
+
+      if isHtml(body)
+        format = 'html'
+      if expectedFormat is 'xml' and isXML(body)
+        format = 'xml'
       if isJSON(body)
-        'json'
-      else
-        'unknown format'
+        format = 'json'
+
       expect(format).to.be.equal expectedFormat
 
     res
 
   visit = (context, opts = {}, cb = null) ->
     visitsCount++
-    test = getTestFromContext(context)
-    # return throw Error("Expecting context (i.e. a test context) here") unless test
-    requestObject = extractRequestFromTitle(test.title)
+    if typeof context is 'string'
+      testObject = null
+      testTitle = context
+      requestObject = extractRequestFromTitle(testTitle)
+    else# if typeof context is 'object' and context isnt null
+      testObject = getTestFromContext(context)
+      # in case visit is called from describe(), this will stop proceeding visit()
+      return {} unless testObject
+      testTitle = testObject.title
+      # return throw Error("Expecting context (i.e. a test context) here") unless test
+      requestObject = extractRequestFromTitle(testTitle)
 
     url = opts?.url || requestObject?.url
     return throw Error("No url given; use test decription -or- { url: '…' } to specify the url which should be requested") unless url
@@ -153,6 +162,8 @@ VisitorJS = (browser, options = {}) ->
 
     browser.url(url)
     absoluteUrl = browser.getUrl()
+
+    requestObject.absoluteUrl = absoluteUrl
 
     if requestObject.statusCode
       # perform headless request as well
@@ -187,8 +198,8 @@ VisitorJS = (browser, options = {}) ->
 
       filename = _callMethodWithArgs saveViewportScreenshot(), {
         i: visitsCount
-        test: test.title
-        safeTitle: sanitize(test.title.replace(/(http[s]*)\:\/\//i,"[$1]").replace(/\//g, '%')).trim()
+        test: testTitle
+        safeTitle: sanitize(testTitle.replace(/(http[s]*)\:\/\//i,"[$1]").replace(/\//g, '%')).trim()
         desiredCapabilities: browser.requestHandler.defaultOptions.desiredCapabilities
       }
 
@@ -197,7 +208,7 @@ VisitorJS = (browser, options = {}) ->
       # has to be enabled explicity every time
       _saveViewportScreenshotPattern = null
 
-    browser
+    { browser, res: responseObject, req: requestObject, requestOptions, testTitle }
 
 
   { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, headlessRequest }

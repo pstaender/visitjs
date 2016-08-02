@@ -11,20 +11,26 @@ exports.config = {
       'wdio-screenshot': {}
     },
     maxInstances: 10,
-    capabilities: [{
+    capabilities: [
+      {
         maxInstances: 5,
-        browserName: 'chrome'
-    },
+        browserName: 'phantomjs'
+      },
+      // {
+      //   maxInstances: 5,
+      //   browserName: 'chrome'
+      // },
     // {
     //     maxInstances: 5,
     //     browserName: 'firefox',
     // }
     ],
+    services: ['selenium-standalone'],
     sync: true,
     logLevel: 'silent',
     coloredLogs: true,
     screenshotPath: './errorShots/',
-    baseUrl: 'http://localhost',
+    baseUrl: 'http://localhost:3300',
     waitforTimeout: 10000,
     connectionRetryTimeout: 90000,
     connectionRetryCount: 3,
