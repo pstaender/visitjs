@@ -1,16 +1,17 @@
 {
   "name": "visitjs",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Philipp Staender <philipp.staender@gmail.com>",
   "homepage": "https://github.com/pstaender/visitjs/",
   "main": "./src/index",
   "repository": {
     "type": "git",
-    "url": "git://github.com:pstaender/visitjs.git"
+    "url": "git+https://github.com/pstaender/visitjs.git"
   },
   "scripts": {
-    "test": "PORT=3300 coffee server.coffee & node_modules/mocha/bin/mocha; ./node_modules/.bin/wdio; kill $(lsof -t -i:3300)"
+    "test": "./run_tests.sh"
   },
+  "license": "MIT",
   "keywords": [
     "frontendtesting",
     "testing",

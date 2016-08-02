@@ -7,13 +7,56 @@ This is a demonstration of writing (nice to read) BDD tests in coffee-script usi
 
 The technology stack is set after my own preferences and therefore of course not the ultimate toolset.
 
-`Visitjs` is a helper between mocha, lower-level request and high-level frontend testing via webdriver.io. The goal is to reduce repeating  actions (like login, http status code, response format, screenshot of the site …).
+`Visitjs` is a helper between mocha, lower-level request and high-level front end testing via webdriver.io. The goal is to reduce repeating  actions (like login, http status code, response format, screenshot of the site …).
 
-## Usage
+## Idea and Usage
 
-After installation (see below), define your project's tests in `test/spec` (or wherever is defined in your `wdio.conf.js`):
+Describe your test scenario and let visitjs guess the basic request information and do the spadework for you. Letting visitjs doing the initial setup for your tests keeps your test code dry and gives you more time to focus on writing detailed scenarios.
+
+Let's start simple:
+
+**(it) expect to visit http://mysite/home**
+
+Now we also want to proof a certain http status code (here 200) which will trigger a headless http request to the selenium test in parallel:
+
+**(it) expect to visit /home -> 200**
+
+Additionally we can ensure that receiving expected format (only body will be validated, no format check in headers):
+
+**(it) expect to get /myapi/v1/person/1 as json -> 200**
+
+### Login and Logout
+
+You can define custom login and logout process using `browser` (see `test/specs/browser.coffee` for further examples).
+
+### Basic Syntax
 
 ```coffee-script
+  it 'expect to visit /mysite/home', ->
+    { browser } = visit(this)
+```
+
+```coffee-script
+  it 'expect to visit /mysite/home', ->
+    { browser, res, req, requestOptions, testTitle } = visit(this)
+```
+
+Or in plain newer js:
+
+```js
+  it('expect to visit /mysite/home', function() {
+    let browser = visit(this).browser;
+  })
+```
+
+You only have to mention the verb ( visit | visiting | get | getting | post | posting … ) followed by an url (absolute or relative), optional with a format (supported are html, xml and json) and a (numeric) http status code. The http status code enables the headless request and is recommended in every test description.
+
+## Example
+
+This test could be located in `test/spec/mytest.coffe` (or whatever is defined in your `wdio.conf.js`):
+
+```coffee-script
+# the `browser` reference is global available via wdio
 { visit } = require('visitjs')(browser)
 
 describe 'Check some google pages', ->
@@ -22,69 +65,19 @@ describe 'Check some google pages', ->
     { browser } = visit(this)
     expect(browser.getTitle()).to.be.equal('Google')
 
-  it 'expect to visit http://www.google.de/someurlthatwillneverexists1930_899fsd with a 404', ->
-    browser = visit(this).browser # alternate syntax as described above
-
 ```
 
-You can define test scenarios by describing the test title:
-
-  * `expect to visit http://www.google.com/ as html with a status code of 200`, means:
-    - **url:** http://www.google.com/
-    - **expected format:** html
-    - **(explicitly) expected status code:** 200
-  * `expect to visit /mysite/my/profile logged in as admin`, means:
-    - **url:** $baseUrl/mysite/my/profile
-    - login process (has to be defined), using user `admin`
-  * `get /mysite/my/profile as html -> 200 (authenticated as admin)`, as example for a more technical description
-
-After calling `browser = visit(this)` you may proceed with more sophisticated frontend tests (e.g. manipulation dom / forms …).
-
-**All processes are - according to webdriver.io's browser feature - synchronously.**
-
-## Login / Logout
+**The described processes are - according to webdriver.io's browser feature - synchronously.**
 
 ## Taking Screenshots
 
-Using `npm install wdio-screenshot`, which requires
+Using `wdio-screenshot`, which requires:
 
 ```sh
   $ brew install graphicsmagick           # max os x
   $ sudo apt-get install graphicsmagick   # ubuntu
 ```
 
-## Idea
+## Requirements
 
-Keep testing as dry as possible. For that, visitjs reduces the basic setup before further expecting a website just by saying `browser = visit(this)` and defining a describing test title.
-
-More examples will follow. For now, checkout visitjs own tests for deeper understanding.
-
-## Install
-
-```sh
-  $ npm install .
-  $ npm install -g mocha
-  $ npm install -g webdriverio
-```
-
-# Run unit tests
-
-```sh
-  $ mocha
-```
-
-## Run integration tests
-
-Ensure you've installed and running selenium:
-
-```sh
-  $ ./node_modules/.bin/wdio
-```
-
-## Run Selenium
-
-```sh
-  $ npm install selenium-standalone@latest -g
-  $ selenium-standalone install
-  $ selenium-standalone start
-```
+  * test suite using `wdio` (webdriver.io) with selenium and mocha (by executing `./node_modules/.bin/wdio`)

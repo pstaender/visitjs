@@ -5,14 +5,7 @@ chai.Should()
 webdriverio = require('webdriverio')
 serverProcess = null
 
-{ visit, login, logout, saveViewportScreenshot } = require('../../src') browser, logins: { admin: { password: 'password' } }
-
-# TODO: headlessRequest test
-# headlessRequest (options) ->
-#   {
-#     headers:
-#       'user-agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
-#   }
+{ visit, login, logout, saveViewportScreenshot, headlessRequestOptions } = require('../../src') browser, logins: { admin: { password: 'password' } }
 
 describe 'Check websites with webdriver.io by it\'s test description (only format, status and title)', ->
 
@@ -27,14 +20,14 @@ describe 'Check websites with webdriver.io by it\'s test description (only forma
     { browser } = visit(this)
     browser.getTitle().should.match(/404/)
 
-describe 'Perform various requests on (local) website unathorized', ->
+describe 'Perform unathorized request on website ', ->
 
-  it 'expect to visit /authorized -> 401', ->
+  it 'expect to visit /authorized (not authorized) -> 401', ->
     { browser } = visit(this)
     browser.getTitle().should.be.equal 'unauthorized'
 
 
-describe 'Perform various requests on (local) website', ->
+describe 'Perform various requests on website', ->
 
   describe 'via login and logout', ->
 
@@ -55,15 +48,31 @@ describe 'Perform various requests on (local) website', ->
     beforeEach ->
       saveViewportScreenshot(true)
 
-    it 'expect to visit unauthroized /authorized -> 200 logged in as admin', ->
+    it 'expect to visit /authorized with a 200 status code, logged in as admin', ->
       { browser } = visit(this)
       browser.getTitle().should.be.equal 'authorized'
 
-    it 'expect to get /json as json -> 200', ->
-      visit(this)
+    it 'expect to get /json as json -> 200 and to receive a headless response object', ->
+      { res } = visit(this)
+      res.statusCode.should.be.equal 200
+      JSON.parse(String(res.body)).should.be.eql {"format":"JSON","valid":true}
 
     it 'expect to get /html as html -> 200', ->
       visit(this)
 
     it 'expect to get /xml as xml -> 200', ->
       visit(this)
+
+describe 'Perform a custom headless requests on website', ->
+
+  it 'expect to perform a headless request with custom header by visiting /header -> 200', ->
+
+    headlessRequestOptions (options, cookie) ->
+      cookie.constructor.should.be.equal Array
+      options.headers = {
+        'x-custom-header': 'customValue'
+      }
+
+    { res } = visit(this)
+    body = JSON.parse(String(res.body))
+    body['x-custom-header'].should.be.equal 'customValue'

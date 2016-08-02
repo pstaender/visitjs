@@ -40,7 +40,7 @@ VisitorJS = (browser, options = {}) ->
 
   _headlessRequestProcedure = null
 
-  headlessRequest = (func) ->
+  headlessRequestOptions = (func) ->
     _headlessRequestProcedure = func if func isnt undefined
     _headlessRequestProcedure
 
@@ -172,10 +172,14 @@ VisitorJS = (browser, options = {}) ->
       requestOptions = {
         followRedirects: false
       }
-      requestOptions = _callMethodWithArgs(headlessRequest(), {
+
+      # via `headlessRequest` the request options can be modified
+      _callMethodWithArgs(headlessRequestOptions(), {
         cookie: browser.cookie().value,
         options: requestOptions
-      }) if typeof headlessRequest() is 'function'
+      }) if typeof headlessRequestOptions() is 'function'
+
+      throw Error("You have to leave options as an object literal") if typeof requestOptions isnt 'object'
 
       # reverse engineer baseUrl (workaround), TODO: get from webdriver.io
       #parsedURL = require('url').parse(absoluteUrl)
@@ -211,6 +215,6 @@ VisitorJS = (browser, options = {}) ->
     { browser, res: responseObject, req: requestObject, requestOptions, testTitle }
 
 
-  { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, headlessRequest }
+  { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, headlessRequestOptions }
 
 module.exports = VisitorJS
