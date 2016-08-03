@@ -1,4 +1,17 @@
-{ visit, login, logout, saveViewportScreenshot, headlessRequestOptions, debug } = require('../../src') browser, logins: { admin: { password: 'password' } }
+expect = require('expect.js')
+
+{
+  visit
+  login
+  logout
+  saveViewportScreenshot
+  headlessRequestOptions
+  debug
+} = require('../../src')(browser, {
+  logins:
+    admin:
+      password: 'password'
+})
 
 chai = require('chai')
 global.expect = chai.expect
@@ -9,7 +22,7 @@ describe 'Check websites with webdriver.io by it\'s test description (only forma
   beforeEach ->
     saveViewportScreenshot(true)
 
-  it 'expect to visit http://www.google.de/ as html with 200', ->
+  it 'expect to visit http://www.google.de/ as html with 200 including taking a snapshot ![google_homepage]', ->
     { browser } = visit(this)
     browser.getTitle().should.be.equal('Google')
 
@@ -23,6 +36,12 @@ describe 'Perform unathorized request on website ', ->
     { browser } = visit(this)
     browser.getTitle().should.be.equal 'unauthorized'
 
+  it 'should throw an error by (unauthorized) visiting /authorized and expecting a status code of 200', (done) ->
+    try
+      { browser } = visit(this)
+    catch error
+      'only catch the error'
+    error.message.should.be.equal 'Expected value is 200 but actually got 401'
 
 describe 'Perform various requests on website', ->
 
@@ -66,8 +85,9 @@ describe 'Perform a custom headless requests on website', ->
 
     debug(true)
 
-    headlessRequestOptions (options, cookie) ->
-      cookie.constructor.should.be.equal Array
+    headlessRequestOptions (options, cookies, browser) ->
+      cookies.constructor.should.be.equal Array
+      browser.should.be.not.null
       options.headers = {
         'x-custom-header': 'customValue'
       }

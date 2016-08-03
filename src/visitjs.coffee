@@ -3,7 +3,6 @@ syncRequest = require('sync-request')
 isHtml = require('is-html')
 isXML = require('is-xml')
 isJSON = require('is-json')
-expect = require('expect.js')
 
 VisitorJS = (browser, options = {}) ->
 
@@ -19,11 +18,14 @@ VisitorJS = (browser, options = {}) ->
   #   password: '…'
   options.logins ?= {}
 
+  { expect } = options
+
   _saveViewportScreenshotPattern = null
 
   saveViewportScreenshot = (pattern) ->
     if pattern is true
-      _saveViewportScreenshotPattern = (i, test, desiredCapabilities, safeTitle) -> "images/#{desiredCapabilities?.browserName}_#{i}_#{safeTitle}.png"
+      _saveViewportScreenshotPattern = (i, test, desiredCapabilities, safeTitle, imageTitle) ->
+        "images/#{desiredCapabilities?.browserName}_#{imageTitle || safeTitle}.png"
     else if pattern isnt undefined
       _saveViewportScreenshotPattern = pattern
     _saveViewportScreenshotPattern
@@ -53,29 +55,34 @@ VisitorJS = (browser, options = {}) ->
 
   extractRequestFromTitle = (title) ->
     match = title.match ///
-      (post|posting|posts|get|getting|gets|
+      ((post|posting|posts|get|getting|gets|
       delete|deleting|deletes|put|putting|puts|
       patch|patching|patches|visit|visiting|visits)   # (1) verb / method
-      [\s\:]+                                         #     devider (space or :), get:https://…
-      (.+?)(\s|$)                                     # (2) url / http address
+      [\s\:]+                                         # devider (space or get:… )
+      ((http[s]*\:\/\/|\/).+?)(\s|$)                  # (2) url / http address
+      )
       (.*)                                            # (3) optional: format, user, status code
       $///i
     unless match
       null
     else
+      imageTitle = null
       statusCode = null
       format = null
       user = null
-      url = match[2]
-      if match[4]
-        s = match[4]
+      url = match[3]
+      method = match[2]
+      #return null unless /^()/i.test url
+      if match[6]
+        s = match[6]
         statusCode = s.match(/\d{3}/)?[0] || statusCode
         format = s.match(/json|xml|html|js/i)?[0] || format
         # e.g.: logged in as admin, auth. as admin
         user = s.match(/(log in|login|logged in|auth|authenticate[d]*) as ([a-zA-Z0-9\_\-@\.]+)/)?[2] || user
+        imageTitle = s.match(/\!\[(.+?)\]/)?[1] || null
       statusCode = Number(statusCode) if statusCode
       #match[3]?.match(/(json|xml)/i)?[1] or null
-      method = match[1]
+
       method = if /^delet/.test(method)
         'delete'
       else if /^post/.test(method)
@@ -86,7 +93,7 @@ VisitorJS = (browser, options = {}) ->
         'post'
       else
         'get'
-      { url, method, format, statusCode, user }
+      { url, method, format, statusCode, user, imageTitle }
 
 
   getTestFromContext = (context) -> context?.currentTest || context?.test || null
@@ -109,6 +116,12 @@ VisitorJS = (browser, options = {}) ->
 
     func.apply(this, args)
 
+  strictAssertationOfValues = (expected, actual) ->
+    if typeof expect is 'function'
+      expect(actual).to.be.equal expected
+    else if expected isnt actual
+      throw Error("Expected value is #{expected} but actually got #{actual}")
+
   verifyResponse = (opts) ->
 
     { requestOptions, statusCode, url, method, format } = opts
@@ -116,7 +129,11 @@ VisitorJS = (browser, options = {}) ->
     console.log "🚀  [headless request] #{method}:#{url} #{JSON.stringify(requestOptions)}" if _debug
 
     res = syncRequest(method, url, requestOptions)
-    expect(res.statusCode).to.be.equal statusCode
+
+    strictAssertationOfValues(statusCode, res.statusCode)
+
+    #throw Error('Expected status code is ')
+    #expect(res.statusCode).to.be.equal statusCode
 
     # TODO: check more format (yml, cson, …)
     if format
@@ -132,7 +149,15 @@ VisitorJS = (browser, options = {}) ->
       if isJSON(body)
         format = 'json'
 
-      expect(format).to.be.equal expectedFormat
+      strictAssertationOfValues(expectedFormat, format)
+      #expect(format).to.be.equal expectedFormat
+
+    if _debug
+      console.log "🚀  [headless response] " + JSON.stringify({
+        statusCode: res.statusCode
+        format
+        headers: res.headers
+      })
 
     res
 
@@ -183,8 +208,9 @@ VisitorJS = (browser, options = {}) ->
       }
 
       requestOptions = _callMethodWithArgs(headlessRequestOptions(), {
-        cookie: browser.cookie().value,
+        cookies: browser.cookie().value,
         options: requestOptions
+        browser
       }) if typeof headlessRequestOptions() is 'function'
 
       throw Error("You have to leave options as an object literal") if typeof requestOptions isnt 'object'
@@ -214,6 +240,7 @@ VisitorJS = (browser, options = {}) ->
         test: testTitle
         safeTitle: sanitize(testTitle.replace(/(http[s]*)\:\/\//i,"[$1]").replace(/\//g, '%')).trim()
         desiredCapabilities: browser.requestHandler.defaultOptions.desiredCapabilities
+        imageTitle: requestObject.imageTitle
       }
 
       #filename = getNameForScreenshot({ title: test.title, desiredCapabilities: browser.requestHandler.desiredCapabilities }, saveViewportScreenshot())

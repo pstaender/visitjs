@@ -3,31 +3,53 @@
 
 [![Build Status](https://api.travis-ci.org/pstaender/visitjs.png)](https://travis-ci.org/pstaender/visitjs)
 
-This is a demonstration of writing (nice to read) BDD tests in coffee-script using mocha, chai (or whatever assertation tool you prefer) and webdriver.io / selenium.
+For what visitjs is made for:
 
-The technology stack is set after my own preferences and therefore of course not the ultimate toolset.
+  * enables you to writer (nicer to read) BDD tests in coffee-script using mocha, chai (or whatever assertation tool you prefer) and webdriver.io / selenium.
+  * acting as helper between mocha, lower-level request and high-level front end testing (via webdriver.io)
+  * guesses basic request information of the test description and does the spadework for you (opening site, check status and format)
+  * reduces repeating actions (like login, checking initial http status code, taking screenshots of the site …)
+  * helps to keep test code dryer so that you can spend more time on writing useful and easy to understand test scenarios
 
-`Visitjs` is a helper between mocha, lower-level request and high-level front end testing via webdriver.io. The goal is to reduce repeating  actions (like login, http status code, response format, screenshot of the site …).
+The technology stack is set after my own preferences, that's why visitjs is made for use with mocha and wedriver.io exclusively for now.
 
-## Idea and Usage
+## Usage
 
-Describe your test scenario and let visitjs guess the basic request information and do the spadework for you. Letting visitjs doing the initial setup for your tests keeps your test code dry and gives you more time to focus on writing detailed scenarios.
+As stated before, visitjs guesses basic request information of the test description and preparing an initial stage for starting your test scenario.
 
-Let's start simple:
+The following examples are normally written in tests like `it('expect to visit … ', function() { … })`.
 
-**expect to visit http://mysite/home**
+Let's start simple by visting a site:
 
-Now we also want to proof a certain http status code (here 200) which will trigger a headless http request to the selenium test in parallel:
+```
+  expect to visit http://mysite/home**
+```
 
-**expect to visit /home -> 200**
+If we want to proof a certain http status code (which I recommended in any test), a headless http request (via `sync_request`) is triggered to the selenium test in parallel:
 
-Additionally we can ensure that receiving expected format (only body will be validated, no format check in headers):
+```
+  expect to visit /home -> 200
+```
 
-**expect to get /myapi/v1/person/1 as json -> 200**
+Additionally we can ensure that we receive a specific format (only body will be validated, no format check in headers):
+
+```
+  expect to get /myapi/v1/person/1 as json -> 200
+```
 
 By using authorization (via `login` and `logout`), we can describe tests for different users:
 
-**expect to get /my/profile -> 200 authorized as admin**
+```
+  expect to get /my/profile -> 200 authorized as admin
+```
+
+If you want to name screenshot images for tests by your own definition, do:
+
+```
+  expect to get /my/profile -> 200 authorized as admin ![my_profile_as_admin]
+```
+
+**
 
 ### Login and Logout
 
@@ -135,13 +157,14 @@ or define your own name pattern (order and number of arguments is free):
 ```coffee-script
   describe 'my test suite', ->
     beforeEach ->
-      saveViewportScreenshot (i, k, test, safeTitle, desiredCapabilities) ->
+      saveViewportScreenshot (i, k, test, safeTitle, desiredCapabilities, imageTitle) ->
         # i: visits count
         # k: screen shots count
         # test: testTitle
         # safeTitle: filename safe title
         # desiredCapabilities: access browser name, etc
-        "images/#{desiredCapabilities.browserName}_#{k}_#{safeTitle}.png"
+        # imageTitle: optional, custom name for screenshot image 
+        "images/#{desiredCapabilities.browserName}_#{k}_#{imageTitle || safeTitle}.png"
 ```
 
 It's using `wdio-screenshot`, which requires:
