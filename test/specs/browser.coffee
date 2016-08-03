@@ -1,15 +1,13 @@
-{ visit, login, logout, saveViewportScreenshot, headlessRequestOptions } = require('../../src') browser, logins: { admin: { password: 'password' } }
-
+{ visit, login, logout, saveViewportScreenshot, headlessRequestOptions, debug } = require('../../src') browser, logins: { admin: { password: 'password' } }
 
 chai = require('chai')
 global.expect = chai.expect
 chai.Should()
 
-
 describe 'Check websites with webdriver.io by it\'s test description (only format, status and title)', ->
 
   beforeEach ->
-    saveViewportScreenshot(true)# (i, test) -> "images/#{i}_#{test}.png"
+    saveViewportScreenshot(true)
 
   it 'expect to visit http://www.google.de/ as html with 200', ->
     { browser } = visit(this)
@@ -66,11 +64,14 @@ describe 'Perform a custom headless requests on website', ->
 
   it 'expect to perform a headless request with custom header by visiting /header -> 200', ->
 
+    debug(true)
+
     headlessRequestOptions (options, cookie) ->
       cookie.constructor.should.be.equal Array
       options.headers = {
         'x-custom-header': 'customValue'
       }
+      options
 
     { res } = visit(this)
     body = JSON.parse(String(res.body))

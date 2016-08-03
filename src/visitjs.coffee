@@ -9,6 +9,7 @@ VisitorJS = (browser, options = {}) ->
 
   baseUrl = options.baseUrl || ''
   visitsCount = 0
+  screenShotsCount = 0
   responseObject = null
 
   # e.g.:
@@ -26,6 +27,12 @@ VisitorJS = (browser, options = {}) ->
     else if pattern isnt undefined
       _saveViewportScreenshotPattern = pattern
     _saveViewportScreenshotPattern
+
+  _debug = false
+
+  debug = (enable) ->
+    _debug = enable || false
+    _debug
 
   _loginProcedure = null
   _logoutProcedure = null
@@ -106,6 +113,8 @@ VisitorJS = (browser, options = {}) ->
 
     { requestOptions, statusCode, url, method, format } = opts
 
+    console.log "🚀  [headless request] #{method}:#{url} #{JSON.stringify(requestOptions)}" if _debug
+
     res = syncRequest(method, url, requestOptions)
     expect(res.statusCode).to.be.equal statusCode
 
@@ -173,8 +182,7 @@ VisitorJS = (browser, options = {}) ->
         followRedirects: false
       }
 
-      # via `headlessRequest` the request options can be modified
-      _callMethodWithArgs(headlessRequestOptions(), {
+      requestOptions = _callMethodWithArgs(headlessRequestOptions(), {
         cookie: browser.cookie().value,
         options: requestOptions
       }) if typeof headlessRequestOptions() is 'function'
@@ -199,9 +207,10 @@ VisitorJS = (browser, options = {}) ->
 
     if isGetRequest and saveViewportScreenshot()
       # take screenshot
-
+      screenShotsCount++
       filename = _callMethodWithArgs saveViewportScreenshot(), {
         i: visitsCount
+        k: screenShotsCount
         test: testTitle
         safeTitle: sanitize(testTitle.replace(/(http[s]*)\:\/\//i,"[$1]").replace(/\//g, '%')).trim()
         desiredCapabilities: browser.requestHandler.defaultOptions.desiredCapabilities
@@ -215,6 +224,6 @@ VisitorJS = (browser, options = {}) ->
     { browser, res: responseObject, req: requestObject, requestOptions, testTitle }
 
 
-  { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, headlessRequestOptions }
+  { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, headlessRequestOptions, debug }
 
 module.exports = VisitorJS

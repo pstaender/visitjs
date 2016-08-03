@@ -107,14 +107,53 @@ describe 'Check some google pages', ->
 
 **The described processes are - according to webdriver.io's browser feature - synchronously.**
 
+## Custom headless request options
+
+You can set your own options for the headless request. This enables you to set specific header / cookie data. For Example:
+
+```coffee-script
+  headlessRequestOptions (options, cookie) ->
+    options.headers = {
+      'x-custom-header': 'customValue'
+    }
+    options.followRedirects = true
+    return options
+```
+
+Ensure that you return the options object.
+
 ## Taking Screenshots
 
-Using `wdio-screenshot`, which requires:
+```coffee-script
+  describe 'my test suite', ->
+    beforeEach ->
+      saveViewportScreenshot(true)
+```
+
+or define your own name pattern (order and number of arguments is free):
+
+```coffee-script
+  describe 'my test suite', ->
+    beforeEach ->
+      saveViewportScreenshot (i, k, test, safeTitle, desiredCapabilities) ->
+        # i: visits count
+        # k: screen shots count
+        # test: testTitle
+        # safeTitle: filename safe title
+        # desiredCapabilities: access browser name, etc
+        "images/#{desiredCapabilities.browserName}_#{k}_#{safeTitle}.png"
+```
+
+It's using `wdio-screenshot`, which requires:
 
 ```sh
   $ brew install graphicsmagick           # max os x
   $ sudo apt-get install graphicsmagick   # ubuntu
 ```
+
+## Debug Request
+
+You can enable / disable debugging of the headless request by calling `debug(true)` and `debug(false)` respectively.
 
 ## Requirements
 
