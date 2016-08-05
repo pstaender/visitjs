@@ -3,6 +3,7 @@ node_js:
   - "6"
   - "6.1"
   - "5"
+  - "4"
 before_script:
   - sudo apt-get install openjdk-7-jre-headless -y
   - sudo apt-get install graphicsmagick -y
