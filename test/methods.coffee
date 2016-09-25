@@ -2,7 +2,9 @@ expect = require('expect.js')
 
 visitor = { extractRequestFromTitle } = require('../src')()
 
-describe 'unit tests for VisitorJS', ->
+describe 'unit tests for visitjs', ->
+
+  return
 
   it 'expect to convert a title to request options', ->
     # get /mysite as JSON with status code 200

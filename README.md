@@ -1,17 +1,17 @@
 # visitjs
 ## BDD with mocha, webdriver.io and less pain
 
-[![Build Status](https://api.travis-ci.org/pstaender/visitjs.png)](https://travis-ci.org/pstaender/visitjs)
-
 For what visitjs is made for:
 
-  * enables you to writer (nicer to read) BDD tests in coffee-script using mocha, chai (or whatever assertation tool you prefer) and webdriver.io / selenium.
+  * enables you to write (nicer to read) BDD tests in coffee-script using mocha, chai (or whatever assertion tool you prefer) and webdriver.io / selenium
   * acting as helper between mocha, lower-level request and high-level front end testing (via webdriver.io)
-  * guesses basic request information of the test description and does the spadework for you (opening site, check status and format)
+  * guesses basic request information from the description of the test and does the spadework for you (opening site, check status and format)
   * reduces repeating actions (like login, checking initial http status code, taking screenshots of the site …)
   * helps to keep test code dryer so that you can spend more time on writing useful and easy to understand test scenarios
 
 The technology stack is set after my own preferences, that's why visitjs is made for use with mocha and wedriver.io exclusively for now.
+
+[![Build Status](https://img.shields.io/travis/pstaender/visitjs/master.svg)](https://travis-ci.org/pstaender/visitjs)
 
 ## Usage
 
@@ -25,7 +25,7 @@ Let's start simple by visting a site:
   expect to visit http://mysite/home**
 ```
 
-If we want to proof a certain http status code (which I recommended in any test), a headless http request (via `sync_request`) is triggered to the selenium test in parallel:
+If we want to proof a certain http status code (which I recommended in any test), a headless http request (via `request`) is triggered to the selenium test in parallel:
 
 ```
   expect to visit /home -> 200
@@ -131,7 +131,11 @@ describe 'Check some google pages', ->
 
 ## Custom headless request options
 
-You can set your own options for the headless request. This enables you to set specific header / cookie data. For Example:
+Headless request in this context means, a request without any bowser (but of course with the usual http headers).
+
+For headless requests the popular [nodejs request module](https://github.com/request/request) is used (in sync manner, here). Thus all known `request` options can be used.
+
+This enables you to set specific header / cookie data. For Example:
 
 ```coffee-script
   headlessRequestOptions (options, cookie) ->
@@ -163,7 +167,7 @@ or define your own name pattern (order and number of arguments is free):
         # test: testTitle
         # safeTitle: filename safe title
         # desiredCapabilities: access browser name, etc
-        # imageTitle: optional, custom name for screenshot image 
+        # imageTitle: optional, custom name for screenshot image
         "images/#{desiredCapabilities.browserName}_#{k}_#{imageTitle || safeTitle}.png"
 ```
 
@@ -174,9 +178,9 @@ It's using `wdio-screenshot`, which requires:
   $ sudo apt-get install graphicsmagick   # ubuntu
 ```
 
-## Debug Request
+## Debug (headless) Request
 
-You can enable / disable debugging of the headless request by calling `debug(true)` and `debug(false)` respectively.
+You can enable / disable debugging of the headless request by calling `debug(true)` and `debug(false)` in your testsuite respectively.
 
 ## Requirements
 

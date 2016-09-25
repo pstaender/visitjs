@@ -19,6 +19,8 @@ chai.Should()
 
 describe 'Check websites with webdriver.io by it\'s test description (only format, status and title)', ->
 
+  debug(true)
+
   beforeEach ->
     saveViewportScreenshot(true)
 
@@ -26,11 +28,13 @@ describe 'Check websites with webdriver.io by it\'s test description (only forma
     { browser } = visit(this)
     browser.getTitle().should.be.equal('Google')
 
-  it 'expect to visit http://www.google.de/someurlthatwillneverexists1930_899fsd with 404', ->
-    { browser } = visit(this)
-    browser.getTitle().should.match(/404/)
+  # it 'expect to visit http://www.google.de/someurlthatwillneverexists1930_899fsd with 404', ->
+  #   { browser } = visit(this)
+  #   browser.getTitle().should.match(/404/)
 
 describe 'Perform unathorized request on website ', ->
+
+  return
 
   it 'expect to visit /authorized (not authorized) -> 401', ->
     { browser } = visit(this)
@@ -64,22 +68,26 @@ describe 'Perform various requests on website', ->
     beforeEach ->
       saveViewportScreenshot(true)
 
-    it 'expect to visit /authorized with a 200 status code, logged in as admin', ->
-      { browser } = visit(this)
-      browser.getTitle().should.be.equal 'authorized'
+    it 'expect to visit /authorized with a 200 status code, logged in as admin', (done) ->
+      visit this, (browser) ->
+        browser.getTitle().should.be.equal 'authorized'
+        done()
 
-    it 'expect to get /json as json -> 200 and to receive a headless response object', ->
-      { res } = visit(this)
-      res.statusCode.should.be.equal 200
-      JSON.parse(String(res.body)).should.be.eql {"format":"JSON","valid":true}
+    it 'expect to get /json as json -> 200 and to receive a headless response object', (done) ->
+      visit this, (res) ->
+        res.statusCode.should.be.equal 200
+        JSON.parse(String(res.body)).should.be.eql {"format":"JSON","valid":true}
+        done()
 
-    it 'expect to get /html as html -> 200', ->
-      visit(this)
+    it 'expect to get /html as html -> 200', (done) ->
+      visit this, -> done()
 
-    it 'expect to get /xml as xml -> 200', ->
-      visit(this)
+    it 'expect to get /xml as xml -> 200', (done) ->
+      visit this, -> done()
 
 describe 'Perform a custom headless requests on website', ->
+
+  return
 
   it 'expect to perform a headless request with custom header by visiting /header -> 200', ->
 
