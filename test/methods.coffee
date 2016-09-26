@@ -4,8 +4,6 @@ visitor = { extractRequestFromTitle } = require('../src')()
 
 describe 'unit tests for visitjs', ->
 
-  return
-
   it 'expect to convert a title to request options', ->
     # get /mysite as JSON with status code 200
     match = visitor.extractRequestFromTitle 'get /mysite as json with status code 301'

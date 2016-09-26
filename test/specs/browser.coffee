@@ -17,9 +17,9 @@ chai = require('chai')
 global.expect = chai.expect
 chai.Should()
 
-describe 'Check websites with webdriver.io by it\'s test description (only format, status and title)', ->
+debug(true)
 
-  debug(true)
+describe 'Check websites with webdriver.io by it\'s test description (only format, status and title)', ->
 
   beforeEach ->
     saveViewportScreenshot(true)
@@ -28,13 +28,11 @@ describe 'Check websites with webdriver.io by it\'s test description (only forma
     { browser } = visit(this)
     browser.getTitle().should.be.equal('Google')
 
-  # it 'expect to visit http://www.google.de/someurlthatwillneverexists1930_899fsd with 404', ->
-  #   { browser } = visit(this)
-  #   browser.getTitle().should.match(/404/)
+  it 'expect to visit http://www.google.de/someurlthatwillneverexists1930_899fsd with 404', ->
+    { browser } = visit(this)
+    browser.getTitle().should.match(/404/)
 
 describe 'Perform unathorized request on website ', ->
-
-  return
 
   it 'expect to visit /authorized (not authorized) -> 401', ->
     { browser } = visit(this)
@@ -87,11 +85,8 @@ describe 'Perform various requests on website', ->
 
 describe 'Perform a custom headless requests on website', ->
 
-  return
 
   it 'expect to perform a headless request with custom header by visiting /header -> 200', ->
-
-    debug(true)
 
     headlessRequestOptions (options, cookies, browser) ->
       cookies.constructor.should.be.equal Array

@@ -22,16 +22,16 @@ The following examples are normally written in tests like `it('expect to visit �
 Let's start simple by visting a site:
 
 ```
-  expect to visit http://mysite/home**
+  expect to visit http://mysite/home
 ```
 
-If we want to proof a certain http status code (which I recommended in any test), a headless http request (via `request`) is triggered to the selenium test in parallel:
+If we want to proof a certain http status code (which is recommended), a headless http request (via `request`) is triggered to the selenium test as well:
 
 ```
   expect to visit /home -> 200
 ```
 
-Additionally we can ensure that we receive a specific format (only body will be validated, no format check in headers):
+Additionally we can ensure that we receive a specific format (only payload data will be validated, no format check in headers):
 
 ```
   expect to get /myapi/v1/person/1 as json -> 200
@@ -48,8 +48,6 @@ If you want to name screenshot images for tests by your own definition, do:
 ```
   expect to get /my/profile -> 200 authorized as admin ![my_profile_as_admin]
 ```
-
-**
 
 ### Login and Logout
 
@@ -180,7 +178,16 @@ It's using `wdio-screenshot`, which requires:
 
 ## Debug (headless) Request
 
-You can enable / disable debugging of the headless request by calling `debug(true)` and `debug(false)` in your testsuite respectively.
+You can enable / disable debugging of the headless request by calling `debug(true)` and `debug(false)` in your testsuite respectively:
+
+```coffee-script
+  { visit, debug } = require('visitjs')(browser)
+
+  debug(true)
+
+  it 'expect to visit …', ->
+    …
+```
 
 ## Requirements
 

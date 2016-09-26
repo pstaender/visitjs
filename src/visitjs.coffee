@@ -1,28 +1,9 @@
 sanitize = require("sanitize-filename")
-request = require('request')
+syncRequest = require('../lib/request').syncRequest
+#require('sync-request')
 isHtml = require('is-html')
 isXML = require('is-xml')
 isJSON = require('is-json')
-
-# syncRequest = (options) ->
-#   response = undefined
-#   error = null
-#   body = undefined
-#
-#   request options, (err, res, b) ->
-#     error = err
-#     body = b
-#     response = res
-#
-#   # spare timeout
-#   setTimeout ->
-#     response = null
-#   , 10000
-#
-#   while response is undefined
-#     require('deasync').runLoopOnce()
-#
-#   return { response, error, body }
 
 VisitorJS = (browser, options = {}) ->
 
@@ -142,51 +123,41 @@ VisitorJS = (browser, options = {}) ->
     else if expected isnt actual
       throw Error("Expected value is #{expected} but actually got #{actual}")
 
-  verifyResponse = (opts, cb) ->
+  verifyResponse = (opts) ->
 
     { requestOptions, statusCode, url, method, format } = opts
 
     console.log "🚀  [headless request] #{method}:#{url} #{JSON.stringify(requestOptions)}" if _debug
 
-    requestOptions ?= {}
-    requestOptions.uri = url
-    requestOptions.method = method
+    res = syncRequest(url, method, requestOptions)
 
-    request requestOptions, (err, res, body) ->#syncRequest(method, url, requestOptions)
+    strictAssertationOfValues(Number(statusCode), Number(res.statusCode))
 
-      body = body.toString()
+    # TODO: check more format (yml, cson, …)
+    if format
+      expectedFormat = format.toLowerCase()
+      body = res.body.toString()
 
-      #console.log '!!!', body
+      format = 'unknown format'
 
-      strictAssertationOfValues(statusCode, res.statusCode)
+      if isHtml(body)
+        format = 'html'
+      if expectedFormat is 'xml' and isXML(body)
+        format = 'xml'
+      if isJSON(body)
+        format = 'json'
 
-      #throw Error('Expected status code is ')
-      #expect(res.statusCode).to.be.equal statusCode
+      strictAssertationOfValues(expectedFormat, format)
+      #expect(format).to.be.equal expectedFormat
 
-      # TODO: check more format (yml, cson, …)
-      if format
-        expectedFormat = format.toLowerCase()
+    if _debug
+      console.log "🚀  [headless response] " + JSON.stringify({
+        statusCode: res.statusCode
+        format
+        headers: res.headers
+      })
 
-        format = 'unknown format'
-
-        if isHtml(body)
-          format = 'html'
-        if expectedFormat is 'xml' and isXML(body)
-          format = 'xml'
-        if isJSON(body)
-          format = 'json'
-
-        strictAssertationOfValues(expectedFormat, format)
-        #expect(format).to.be.equal expectedFormat
-
-      if _debug
-        console.log "🚀  [headless response] " + JSON.stringify({
-          statusCode: res.statusCode
-          format
-          headers: res.headers
-        })
-
-      cb(res)
+    res
 
   visit = (context, opts = {}, cb = null) ->
     visitsCount++
@@ -202,16 +173,7 @@ VisitorJS = (browser, options = {}) ->
       # return throw Error("Expecting context (i.e. a test context) here") unless test
       requestObject = extractRequestFromTitle(testTitle)
 
-    if typeof opts is 'function'
-      cb = opts
-      opts = {}
-
-    if typeof cb isnt 'function'
-      throw Error('visitjs expects a cb as last argument')
-
-
     url = opts?.url || requestObject?.url
-
     return throw Error("No url given; use test decription -or- { url: '…' } to specify the url which should be requested") unless url
 
     if requestObject.user
@@ -235,31 +197,7 @@ VisitorJS = (browser, options = {}) ->
 
     requestObject.absoluteUrl = absoluteUrl
 
-    # via selenium
-    if isGetRequest and saveViewportScreenshot()
-      # take screenshot
-      screenShotsCount++
-      filename = _callMethodWithArgs saveViewportScreenshot(), {
-        i: visitsCount
-        k: screenShotsCount
-        test: testTitle
-        safeTitle: sanitize(testTitle.replace(/(http[s]*)\:\/\//i,"[$1]").replace(/\//g, '%')).trim()
-        desiredCapabilities: browser.requestHandler.defaultOptions.desiredCapabilities
-        imageTitle: requestObject.imageTitle
-      }
-
-      #filename = getNameForScreenshot({ title: test.title, desiredCapabilities: browser.requestHandler.desiredCapabilities }, saveViewportScreenshot())
-      browser.saveViewportScreenshot filename
-      # has to be enabled explicity every time
-      _saveViewportScreenshotPattern = null
-
-
-    final_cb = (err, res, body) ->
-      _callMethodWithArgs cb, { browser, res, req: requestObject, body, requestOptions, testTitle, err }
-
-    if not requestObject.statusCode
-      final_cb(null, null)
-    else
+    if requestObject.statusCode
       # perform headless request as well
 
       # extract cookies
@@ -283,15 +221,32 @@ VisitorJS = (browser, options = {}) ->
       else
         browser.requestHandler.defaultOptions.baseUrl + url
 
-      verifyResponse {
+      responseObject = verifyResponse {
         method: requestObject.method
         url: urlForRequest
         requestOptions
         format: requestObject.format || null
         statusCode: requestObject.statusCode || null
-      }, (err, responseObject, body) ->
-        final_cb(err, responseObject, body)
+      }
 
+    if isGetRequest and saveViewportScreenshot()
+      # take screenshot
+      screenShotsCount++
+      filename = _callMethodWithArgs saveViewportScreenshot(), {
+        i: visitsCount
+        k: screenShotsCount
+        test: testTitle
+        safeTitle: sanitize(testTitle.replace(/(http[s]*)\:\/\//i,"[$1]").replace(/\//g, '%')).trim()
+        desiredCapabilities: browser.requestHandler.defaultOptions.desiredCapabilities
+        imageTitle: requestObject.imageTitle
+      }
+
+      #filename = getNameForScreenshot({ title: test.title, desiredCapabilities: browser.requestHandler.desiredCapabilities }, saveViewportScreenshot())
+      browser.saveViewportScreenshot filename
+      # has to be enabled explicity every time
+      _saveViewportScreenshotPattern = null
+
+    { browser, res: responseObject, req: requestObject, requestOptions, testTitle }
 
 
   { visit, login, logout, saveViewportScreenshot, extractRequestFromTitle, headlessRequestOptions, debug }

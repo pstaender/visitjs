@@ -22,11 +22,13 @@
   "dependencies": {
     "asyncawait": "^1.0.6",
     "body-parser": "^1.15.2",
+    "concat-stream": "^1.5.2",
     "deasync": "^0.1.7",
     "express": "^4.14.0",
     "is-html": "^1.0.0",
     "is-json": "^2.0.0",
     "is-xml": "^0.1.0",
+    "json-buffer": "^2.0.11",
     "request": "^2.75.0",
     "sanitize-filename": "^1.6.0",
     "sync-request": "^3.0.1"
